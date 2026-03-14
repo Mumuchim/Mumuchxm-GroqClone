@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mumuchxm Clone | Neural Interface</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── FOUNDATION & RESET ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-base: #030303;
+      --bg-surface: rgba(20, 20, 22, 0.7);
+      --bg-surface-solid: #141416;
+      
+      --text-primary: #F3F4F6;
+      --text-secondary: #9CA3AF;
+      --text-tertiary: #6B7280;
+      
+      --accent-glow: rgba(255, 255, 255, 0.08);
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-focus: rgba(255, 255, 255, 0.2);
+      
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-pill: 9999px;
+      
+      --spring: cubic-bezier(0.175, 0.885, 0.32, 1.05);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── AMBIENT BACKGROUND EFFECTS ─── */
+    .ambient-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.15;
+      animation: float 20s infinite alternate var(--ease-out);
+    }
+    .orb-1 {
+      width: 40vw; height: 40vw;
+      background: #ffffff;
+      top: -10vw; left: -10vw;
+    }
+    .orb-2 {
+      width: 30vw; height: 30vw;
+      background: #888888;
+      bottom: -10vw; right: -5vw;
+      animation-delay: -5s;
+    }
+    
+    /* Subtle noise texture */
+    .ambient-canvas::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+
+    /* ─── MAIN LAYOUT ─── */
+    .app-wrapper {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ─── HEADER / SYSTEM STATUS ─── */
+    header {
+      flex-shrink: 0;
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: fadeDown 0.8s var(--ease-out) forwards;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-avatar {
+      width: 36px; height: 36px;
+      background: var(--text-primary);
+      color: var(--bg-base);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 18px;
+    }
+    .brand-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand-name {
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .brand-version {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-pill);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      backdrop-filter: blur(12px);
+    }
+    .status-ping {
+      width: 6px; height: 6px;
+      background-color: #10B981; /* Precise subtle green for "online" */
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+      animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    /* ─── CHAT FEED ─── */
+    .chat-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 24px 160px; /* Padding for bottom dock */
+      display: flex;
+      flex-direction: column;
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-focus) transparent;
+    }
+    .chat-viewport::-webkit-scrollbar { width: 4px; }
+    .chat-viewport::-webkit-scrollbar-track { background: transparent; }
+    .chat-viewport::-webkit-scrollbar-thumb { background: var(--border-focus); border-radius: 4px; }
+
+    /* Hero Intro (Fades out when chat starts) */
+    .hero-intro {
+      margin: auto 0;
+      padding: 40px 0;
+      text-align: center;
+      transition: opacity 0.5s, transform 0.5s;
+    }
+    .hero-intro.hidden {
+      opacity: 0;
+      transform: scale(0.95);
+      pointer-events: none;
+      display: none;
+    }
+    .hero-title {
+      font-size: 48px;
+      font-weight: 400;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+    .hero-title span {
+      color: var(--text-tertiary);
+    }
+    .hero-desc {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 500px;
+      margin: 0 auto;
+      font-weight: 300;
+    }
+
+    /* ─── MESSAGE DESIGN ─── */
+    .message {
+      display: flex;
+      gap: 16px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      animation: slideUp 0.5s var(--spring) forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    .message:last-child { border-bottom: none; }
+    
+    .msg-avatar {
+      width: 32px; height: 32px;
+      border-radius: var(--radius-sm);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .msg-avatar.ai {
+      background: var(--text-primary);
+      color: var(--bg-base);
+    }
+    .msg-avatar.user {
+      background: var(--bg-surface-solid);
+      border: 1px solid var(--border-focus);
+      color: var(--text-secondary);
+    }
+
+    .msg-content-wrapper {
+      flex: 1;
+      min-width: 0; /* Prevents flex blowout on code blocks */
+    }
+    .msg-header {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .msg-author {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .msg-role {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .msg-body {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .msg-body strong { color: var(--text-primary); font-weight: 500; }
+    .msg-body p { margin-bottom: 12px; }
+    .msg-body p:last-child { margin-bottom: 0; }
+    
+    /* Premium Code Block Styling */
+    .msg-body code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--bg-surface-solid);
+      border: 1px solid var(--border-subtle);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #E5E7EB;
+    }
+    .msg-body pre {
+      background: var(--bg-surface-solid);
+      border: 1px solid var(--border-subtle);
+      padding: 16px;
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .msg-body pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: #A78BFA; /* Subtle syntax highlight color */
+    }
+
+    /* ─── TYPING & STREAMING ─── */
+    .typing-pulse {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      height: 24px;
+    }
+    .pulse-dot {
+      width: 6px; height: 6px;
+      background: var(--text-tertiary);
+      border-radius: 50%;
+      animation: wave 1.2s infinite ease-in-out;
+    }
+    .pulse-dot:nth-child(2) { animation-delay: 0.2s; }
+    .pulse-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    .streaming-cursor::after {
+      content: '▋';
+      display: inline-block;
+      margin-left: 4px;
+      color: var(--text-primary);
+      animation: blink 1s step-end infinite;
+      vertical-align: baseline;
+    }
+
+    /* ─── FLOATING INPUT DOCK ─── */
+    .dock-container {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 0 24px 32px;
+      background: linear-gradient(to top, var(--bg-base) 70%, transparent);
+      z-index: 10;
+    }
+
+    .hint-track {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+    .hint-track::-webkit-scrollbar { display: none; }
+    
+    .hint-btn {
+      flex-shrink: 0;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: all 0.2s var(--ease-out);
+      backdrop-filter: blur(8px);
+    }
+    .hint-btn:hover {
+      background: var(--bg-surface-solid);
+      border-color: var(--text-secondary);
+      color: var(--text-primary);
+      transform: translateY(-2px);
+    }
+
+    .input-box {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 12px 16px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      transition: border-color 0.3s var(--ease-out), box-shadow 0.3s;
+    }
+    .input-box:focus-within {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 1px var(--accent-glow), 0 20px 40px rgba(0,0,0,0.6);
+    }
+
+    #chat-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.5;
+      resize: none;
+      max-height: 200px;
+      min-height: 24px;
+      padding: 4px 0;
+    }
+    #chat-input::placeholder { color: var(--text-tertiary); }
+
+    #send-btn {
+      width: 32px; height: 32px;
+      border-radius: var(--radius-sm);
+      background: var(--text-primary);
+      border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      opacity: 0.3;
+      pointer-events: none;
+      transition: all 0.2s var(--ease-out);
+    }
+    #send-btn svg {
+      width: 14px; height: 14px;
+      fill: var(--bg-base);
+    }
+    #send-btn.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #send-btn.active:hover {
+      transform: scale(1.05);
+      background: #ffffff;
+    }
+    #send-btn.active:active {
+      transform: scale(0.95);
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes float {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(5vw, 5vw); }
+    }
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes ping {
+      75%, 100% { transform: scale(2); opacity: 0; }
+    }
+    @keyframes wave {
+      0%, 100% { transform: translateY(0); opacity: 0.4; }
+      50% { transform: translateY(-4px); opacity: 1; }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 600px) {
+      header { padding: 16px 20px; }
+      .hero-title { font-size: 32px; }
+      .chat-viewport { padding: 0 20px 140px; }
+      .dock-container { padding: 0 16px 20px; }
+      .message { flex-direction: column; gap: 8px; padding: 20px 0; }
+      .msg-avatar { width: 24px; height: 24px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-canvas">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+
+  <div class="app-wrapper">
+    
+    <header>
+      <div class="brand">
+        <div class="brand-avatar">J</div>
+        <div class="brand-info">
+          <span class="brand-name">Mumuchxm</span>
+          <span class="brand-version">Jerome Isaac Cereneo</span>
+        </div>
+      </div>
+      <div class="system-status">
+        <div class="status-ping"></div>
+        Online
+      </div>
+    </header>
+
+    <div class="chat-viewport" id="chat-area">
+      
+      <div class="hero-intro" id="hero-intro">
+        <h1 class="hero-title">Initialize <span>Clone</span></h1>
+        <p class="hero-desc">
+          You are interfaced with the digital persona of Jerome Isaac Cereneo. 
+          Ask about his architecture, coding philosophy, or specific projects.
+        </p>
+      </div>
+
+      </div>
+
+    <div class="dock-container">
+      
+      <div class="hint-track" id="hint-pills">
+        <button class="hint-btn" onclick="setHint(this)">Explain the PENTObattle architecture</button>
+        <button class="hint-btn" onclick="setHint(this)">How does FixFinder work?</button>
+        <button class="hint-btn" onclick="setHint(this)">Details on the Sugar Momma site?</button>
+        <button class="hint-btn" onclick="setHint(this)">What powers the DYC-AI ChatBot?</button>
+      </div>
+
+      <div class="input-box">
+        <textarea
+          id="chat-input"
+          placeholder="Query the persona..."
+          rows="1"
+          autocomplete="off"
+          spellcheck="false"
+        ></textarea>
+        <button id="send-btn" aria-label="Send">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 20V14L11 12L3 10V4L22 12L3 20Z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ─── STATE MANAGEMENT ───
+    const history = [];
+    let isStreaming = false;
+
+    // ─── DOM ELEMENTS ───
+    const chatArea   = document.getElementById('chat-area');
+    const input      = document.getElementById('chat-input');
+    const sendBtn    = document.getElementById('send-btn');
+    const heroIntro  = document.getElementById('hero-intro');
+    const hintPills  = document.getElementById('hint-pills');
+
+    // ─── AUTO-RESIZE INPUT ───
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+      sendBtn.classList.toggle('active', input.value.trim().length > 0);
+    });
+
+    // ─── EVENT LISTENERS ───
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    function setHint(el) {
+      input.value = el.textContent;
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+      sendBtn.classList.add('active');
+      input.focus();
+    }
+
+    // ─── UI RENDERING ───
+    function appendMessage(role, content, streaming = false) {
+      const isUser = role === 'user';
+      
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+
+      const avatar = document.createElement('div');
+      avatar.className = `msg-avatar ${isUser ? 'user' : 'ai'}`;
+      avatar.textContent = isUser ? 'U' : 'J';
+
+      const contentWrap = document.createElement('div');
+      contentWrap.className = 'msg-content-wrapper';
+
+      const header = document.createElement('div');
+      header.className = 'msg-header';
+      
+      const author = document.createElement('span');
+      author.className = 'msg-author';
+      author.textContent = isUser ? 'You' : 'Mumuchxm';
+      
+      const roleTag = document.createElement('span');
+      roleTag.className = 'msg-role';
+      roleTag.textContent = isUser ? 'Guest' : 'Clone V1';
+
+      header.appendChild(author);
+      header.appendChild(roleTag);
+
+      const body = document.createElement('div');
+      body.className = 'msg-body';
+      if (streaming) {
+        body.classList.add('streaming-cursor');
+        body.id = 'active-stream';
+      }
+      body.innerHTML = content ? formatMessage(content) : '';
+
+      contentWrap.appendChild(header);
+      contentWrap.appendChild(body);
+      
+      msgDiv.appendChild(avatar);
+      msgDiv.appendChild(contentWrap);
+      
+      chatArea.appendChild(msgDiv);
+      scrollToBottom();
+      
+      return body;
+    }
+
+    function appendTyping() {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+      msgDiv.id = 'typing-indicator';
+
+      const avatar = document.createElement('div');
+      avatar.className = 'msg-avatar ai';
+      avatar.textContent = 'J';
+
+      const contentWrap = document.createElement('div');
+      contentWrap.className = 'msg-content-wrapper';
+
+      const header = document.createElement('div');
+      header.className = 'msg-header';
+      header.innerHTML = `<span class="msg-author">Mumuchxm</span><span class="msg-role">Processing</span>`;
+
+      const body = document.createElement('div');
+      body.className = 'msg-body';
+      body.innerHTML = `
+        <div class="typing-pulse">
+          <div class="pulse-dot"></div>
+          <div class="pulse-dot"></div>
+          <div class="pulse-dot"></div>
+        </div>`;
+
+      contentWrap.appendChild(header);
+      contentWrap.appendChild(body);
+      msgDiv.appendChild(avatar);
+      msgDiv.appendChild(contentWrap);
+      
+      chatArea.appendChild(msgDiv);
+      scrollToBottom();
+    }
+
+    function removeTyping() {
+      const el = document.getElementById('typing-indicator');
+      if (el) el.remove();
+    }
+
+    // Basic Markdown parser for Chat
+    function formatMessage(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>') // Multi-line code
+        .replace(/`([^`]+)`/g, '<code>$1</code>') // Inline code
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+        .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
+        .replace(/\n/g, '<br>'); // Line breaks
+    }
+
+    function scrollToBottom() {
+      chatArea.scrollTo({ top: chatArea.scrollHeight, behavior: 'smooth' });
+    }
+
+    // ─── NETWORK & STREAMING ENGINE ───
+    async function sendMessage() {
+      const msg = input.value.trim();
+      if (!msg || isStreaming) return;
+
+      isStreaming = true;
+      sendBtn.classList.remove('active');
+      
+      // Clear initial UI elements cleanly
+      if (heroIntro.style.display !== 'none') {
+        heroIntro.classList.add('hidden');
+        setTimeout(() => heroIntro.style.display = 'none', 500);
+      }
+      if (hintPills.style.display !== 'none') {
+        hintPills.style.display = 'none';
+      }
+
+      appendMessage('user', msg);
+      history.push({ role: 'user', content: msg });
+
+      input.value = '';
+      input.style.height = 'auto';
+
+      appendTyping();
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg, history: history.slice(0, -1) }),
+        });
+
+        if (!res.ok) throw new Error('Network response was not ok');
+
+        removeTyping();
+        const streamContainer = appendMessage('assistant', '', true);
+        let fullText = '';
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          const lines = decoder.decode(value).split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                streamContainer.classList.remove('streaming-cursor');
+                break;
+              }
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.token) {
+                  fullText += parsed.token;
+                  streamContainer.innerHTML = formatMessage(fullText);
+                  scrollToBottom();
+                }
+                if (parsed.error) {
+                  streamContainer.innerHTML = `<span style="color:#EF4444">System Error: ${parsed.error}</span>`;
+                  streamContainer.classList.remove('streaming-cursor');
+                }
+              } catch (e) {
+                console.warn('JSON parsing error on stream chunk', e);
+              }
+            }
+          }
+        }
+
+        history.push({ role: 'assistant', content: fullText });
+
+      } catch (err) {
+        removeTyping();
+        appendMessage('assistant', '<span style="color:#EF4444">Connection Failure: Ensure the backend neural engine is running.</span>');
+      }
+
+      isStreaming = false;
+      sendBtn.classList.toggle('active', input.value.trim().length > 0);
+      input.focus();
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,53 @@
+{
+  "identity": {
+    "full_name": "Jerome Isaac Cereneo",
+    "nickname": "Mumuchxm",
+    "tagline": "Developer. Creator. Visionary.",
+    "origin": "Philippines",
+    "personality": "Chill, witty, creative, direct, passionate about tech and design"
+  },
+  "about": {
+    "description": "Jerome Isaac Cereneo, known online as Mumuchxm, is a passionate developer and creator from the Philippines. He loves building things that look good and work even better. He's obsessed with clean design, modern tech, and turning ideas into reality.",
+    "values": ["creativity", "authenticity", "continuous learning", "quality over quantity"],
+    "vibe": "Laid-back but always working on something cool. The kind of person who codes at 2am and enjoys every second of it."
+  },
+  "tech": {
+    "languages": ["Python", "JavaScript", "TypeScript", "HTML/CSS"],
+    "frameworks": ["Flask", "React", "Next.js", "Tailwind CSS"],
+    "tools": ["Vercel", "Git", "VS Code", "Figma"],
+    "interests": ["AI/ML", "Web Development", "UI/UX Design", "Automation"],
+    "currently_learning": ["LLMs", "Agentic AI", "Advanced Python"]
+  },
+  "personality_traits": {
+    "humor": "Dry and sarcastic at times, but always in good fun",
+    "communication_style": "Casual, honest, doesn't sugarcoat things",
+    "work_style": "Focused deep-work sessions, night owl, hates unnecessary meetings",
+    "passion_projects": "Building AI-powered tools, personal projects that solve real problems",
+    "pet_peeves": ["slow code", "bad UI", "over-engineering simple things"]
+  },
+  "lifestyle": {
+    "hobbies": ["Coding", "Gaming", "Watching anime", "Music", "Exploring new tech"],
+    "music_taste": "Lofi, hip-hop, electronic — anything that helps him focus",
+    "food": "Proud Filipino, loves local food, midnight snacks during coding sessions",
+    "philosophy": "Build fast, learn faster. Don't wait for perfect, ship it and improve."
+  },
+  "social": {
+    "online_handle": "Mumuchxm",
+    "platform_presence": "Active builder and creator in the tech community",
+    "collaboration_style": "Open to working with people who share the same passion for building things"
+  },
+  "fun_facts": [
+    "Can solve problems in his head before even opening a code editor",
+    "Has a habit of redesigning things just because they don't look right",
+    "Probably has 10+ unfinished side projects at any given time",
+    "Thinks in systems — always looking at the bigger picture",
+    "Named his online persona 'Mumuchxm' — and no, he won't fully explain why"
+  ],
+  "catchphrases": [
+    "Let's build it.",
+    "That's not clean enough.",
+    "There's always a better way.",
+    "Why not automate it?",
+    "Ship first, perfect later."
+  ]
+}
